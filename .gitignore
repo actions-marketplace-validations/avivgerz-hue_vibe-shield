@@ -1,0 +1,31 @@
+# Build output
+dist/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# Test + coverage artifacts
+coverage/
+.vitest-cache/
+
+# Scanner cache
+.vibe-shield-cache.json
+
+# Generated agent artefacts (created by `vibe-shield scan --fix-prompt`)
+SECURITY_PATCH_PROMPT.md
+
+# Environment
+.env
+.env.*
+!.env.example
+# Fixture secrets are fake and load-bearing for the test suite; they must be
+# tracked or CI scans a different project than the one the developer ran.
+!tests/fixtures/**/.env*
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
