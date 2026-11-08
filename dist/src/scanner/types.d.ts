@@ -1,3 +1,4 @@
+import type { OwaspMappings } from './mappings';
 /**
  * vibe-shield :: scanner type system
  * ----------------------------------
@@ -16,7 +17,7 @@ export type Confidence = (typeof CONFIDENCES)[number];
  * Rule families. Each family maps 1:1 to a module in `src/scanner/rules`
  * (plus `agent-integrity`, which is produced by the MCP / skill auditor).
  */
-export declare const RULE_CATEGORIES: readonly ["client-exposure", "unguarded-routes", "database-exposure", "ai-vulnerabilities", "secret-entropy", "agent-integrity"];
+export declare const RULE_CATEGORIES: readonly ["client-exposure", "unguarded-routes", "database-exposure", "ai-vulnerabilities", "secret-entropy", "infrastructure", "dependencies", "agent-integrity"];
 export type RuleCategory = (typeof RULE_CATEGORIES)[number];
 export declare const CATEGORY_TITLES: Record<RuleCategory, string>;
 /** Relative severity weight used by the scoring model. */
@@ -218,6 +219,8 @@ export interface Rule {
     severity: Severity;
     confidence: Confidence;
     cwe: Cwe;
+    /** OWASP associations; LLM mappings apply only where context warrants. */
+    owasp?: OwaspMappings;
     /** Why this matters — one or two sentences, written for the coding agent. */
     description: string;
     /** Code shape that triggers the rule. */
@@ -264,8 +267,11 @@ export interface Finding {
     severity: Severity;
     confidence: Confidence;
     cwe: Cwe;
+    owasp?: OwaspMappings;
     /** POSIX path relative to the scan root. */
     filePath: string;
+    /** Alias for filePath, relative to the scan root. */
+    file: string;
     absolutePath: string;
     /** 1-based. */
     line: number;
@@ -297,6 +303,31 @@ export interface ScanStats {
 }
 /** Severity histogram. */
 export type SeverityCounts = Record<Severity, number>;
+/** Static inventory; guard and RLS signals are not proof of effective protection. */
+export interface AttackSurface {
+    routes: Array<{
+        file: string;
+        line: number;
+        method: string;
+        path: string;
+        auth: 'guard-signal' | 'unknown';
+    }>;
+    tables: Array<{
+        file: string;
+        line: number;
+        table: string;
+        rls: 'enabled-signal' | 'not-observed';
+    }>;
+    aiEntrypoints: Array<{
+        file: string;
+        line: number;
+    }>;
+    agentFiles: Array<{
+        file: string;
+        kind: 'mcp' | 'skill';
+        name?: string;
+    }>;
+}
 /** Final scorecard. */
 export interface SecurityScore {
     /** 0-100, rounded to one decimal. */
@@ -313,6 +344,7 @@ export interface SecurityScore {
 export interface ScanResult {
     rootDir: string;
     command: 'scan' | 'audit-skills';
+    attackSurface?: AttackSurface;
     findings: Finding[];
     score: SecurityScore;
     stats: ScanStats;

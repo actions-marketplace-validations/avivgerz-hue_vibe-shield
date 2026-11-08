@@ -1,4 +1,6 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isRuleCategory = exports.isSeverity = exports.meetsSeverity = exports.severityRank = exports.emptySeverityCounts = exports.emptyProjectContext = exports.LANGUAGE_EXTENSIONS = exports.GRADE_THRESHOLDS = exports.GRADES = exports.SEVERITY_SCORE_CEILING = exports.SEVERITY_SCORE_PENALTY = exports.SEVERITY_WEIGHT = exports.CATEGORY_TITLES = exports.RULE_CATEGORIES = exports.CONFIDENCES = exports.SEVERITIES = void 0;
 /**
  * vibe-shield :: scanner type system
  * ----------------------------------
@@ -7,8 +9,6 @@
  * `ScanResult` can be cached to disk, emitted as SARIF, or handed to an agent
  * as a patch prompt without any transformation.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.isRuleCategory = exports.isSeverity = exports.meetsSeverity = exports.severityRank = exports.emptySeverityCounts = exports.emptyProjectContext = exports.LANGUAGE_EXTENSIONS = exports.GRADE_THRESHOLDS = exports.GRADES = exports.SEVERITY_SCORE_CEILING = exports.SEVERITY_SCORE_PENALTY = exports.SEVERITY_WEIGHT = exports.CATEGORY_TITLES = exports.RULE_CATEGORIES = exports.CONFIDENCES = exports.SEVERITIES = void 0;
 /** Ordered list of severities, most severe first. */
 exports.SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
 /** Detection confidence reported alongside every finding. */
@@ -23,6 +23,8 @@ exports.RULE_CATEGORIES = [
     'database-exposure',
     'ai-vulnerabilities',
     'secret-entropy',
+    'infrastructure',
+    'dependencies',
     'agent-integrity',
 ];
 exports.CATEGORY_TITLES = {
@@ -31,6 +33,8 @@ exports.CATEGORY_TITLES = {
     'database-exposure': 'Database exposure (RLS, SQLi, service role)',
     'ai-vulnerabilities': 'AI / LLM & classic web vulnerabilities',
     'secret-entropy': 'Hardcoded credentials & high-entropy secrets',
+    infrastructure: 'Infrastructure, headers & containers',
+    dependencies: 'Supply-chain & dependency hygiene',
     'agent-integrity': 'Agent skill & MCP poisoning',
 };
 /** Relative severity weight used by the scoring model. */

@@ -1,3 +1,5 @@
+import type { OwaspMappings } from './mappings';
+
 /**
  * vibe-shield :: scanner type system
  * ----------------------------------
@@ -27,6 +29,8 @@ export const RULE_CATEGORIES = [
   'database-exposure',
   'ai-vulnerabilities',
   'secret-entropy',
+  'infrastructure',
+  'dependencies',
   'agent-integrity',
 ] as const;
 
@@ -38,6 +42,8 @@ export const CATEGORY_TITLES: Record<RuleCategory, string> = {
   'database-exposure': 'Database exposure (RLS, SQLi, service role)',
   'ai-vulnerabilities': 'AI / LLM & classic web vulnerabilities',
   'secret-entropy': 'Hardcoded credentials & high-entropy secrets',
+  infrastructure: 'Infrastructure, headers & containers',
+  dependencies: 'Supply-chain & dependency hygiene',
   'agent-integrity': 'Agent skill & MCP poisoning',
 };
 
@@ -391,6 +397,8 @@ export interface Rule {
   severity: Severity;
   confidence: Confidence;
   cwe: Cwe;
+  /** OWASP associations; LLM mappings apply only where context warrants. */
+  owasp?: OwaspMappings;
   /** Why this matters — one or two sentences, written for the coding agent. */
   description: string;
   /** Code shape that triggers the rule. */
@@ -438,8 +446,11 @@ export interface Finding {
   severity: Severity;
   confidence: Confidence;
   cwe: Cwe;
+  owasp?: OwaspMappings;
   /** POSIX path relative to the scan root. */
   filePath: string;
+  /** Alias for filePath, relative to the scan root. */
+  file: string;
   absolutePath: string;
   /** 1-based. */
   line: number;
@@ -474,6 +485,14 @@ export interface ScanStats {
 /** Severity histogram. */
 export type SeverityCounts = Record<Severity, number>;
 
+/** Static inventory; guard and RLS signals are not proof of effective protection. */
+export interface AttackSurface {
+  routes: Array<{ file: string; line: number; method: string; path: string; auth: 'guard-signal' | 'unknown' }>;
+  tables: Array<{ file: string; line: number; table: string; rls: 'enabled-signal' | 'not-observed' }>;
+  aiEntrypoints: Array<{ file: string; line: number }>;
+  agentFiles: Array<{ file: string; kind: 'mcp' | 'skill'; name?: string }>;
+}
+
 /** Final scorecard. */
 export interface SecurityScore {
   /** 0-100, rounded to one decimal. */
@@ -488,6 +507,7 @@ export interface SecurityScore {
 export interface ScanResult {
   rootDir: string;
   command: 'scan' | 'audit-skills';
+  attackSurface?: AttackSurface;
   findings: Finding[];
   score: SecurityScore;
   stats: ScanStats;

@@ -26,7 +26,7 @@
 import * as path from 'node:path';
 
 import { auditSkills } from '../mcp-guard/skill-auditor';
-import { scanProject } from '../scanner/engine';
+import { packageVersion, scanProject } from '../scanner/engine';
 import { ALL_RULES, getRule } from '../scanner/rules';
 import { isSeverity, type Finding, type Rule, type ScanResult, type Severity } from '../scanner/types';
 
@@ -268,6 +268,7 @@ const toToolResult = (
       filesScanned: result.stats.filesScanned,
       durationMs: result.stats.durationMs,
       rootDir: result.rootDir,
+      attackSurface: result.attackSurface,
       findings: shown.map((finding) => ({
         ruleId: finding.ruleId,
         slug: finding.slug,
@@ -277,10 +278,12 @@ const toToolResult = (
         title: finding.title,
         message: finding.message,
         filePath: finding.filePath,
+        file: finding.file,
         line: finding.line,
         column: finding.column,
         snippet: finding.snippet,
         cwe: finding.cwe,
+        owasp: finding.owasp,
         remediation: finding.remediation,
         secureExample: finding.secureExample,
         references: finding.references,
@@ -321,6 +324,7 @@ const explainRuleResult = (rule: Rule): McpToolResult => {
       severity: rule.severity,
       confidence: rule.confidence,
       cwe: rule.cwe,
+      owasp: rule.owasp,
       description: rule.description,
       insecureExample: rule.insecureExample,
       secureExample: rule.secureExample,
@@ -460,7 +464,7 @@ export async function handleMessage(
         serverInfo: {
           name: SERVER_NAME,
           title: 'vibe-shield',
-          version: options.version ?? '1.1.0',
+          version: options.version ?? await packageVersion(),
         },
         instructions:
           'vibe-shield finds security bugs that AI coding agents ship: leaked secrets, unguarded API routes, missing Postgres RLS, SQL injection, prompt injection and poisoned agent skills. Call vibe_shield_scan after writing application code and before reporting a task as done, and vibe_shield_audit_skills after touching any agent instruction or MCP config file.',

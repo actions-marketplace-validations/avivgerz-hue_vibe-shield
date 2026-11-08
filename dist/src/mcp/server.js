@@ -230,6 +230,7 @@ const toToolResult = (result, options) => {
             filesScanned: result.stats.filesScanned,
             durationMs: result.stats.durationMs,
             rootDir: result.rootDir,
+            attackSurface: result.attackSurface,
             findings: shown.map((finding) => ({
                 ruleId: finding.ruleId,
                 slug: finding.slug,
@@ -239,10 +240,12 @@ const toToolResult = (result, options) => {
                 title: finding.title,
                 message: finding.message,
                 filePath: finding.filePath,
+                file: finding.file,
                 line: finding.line,
                 column: finding.column,
                 snippet: finding.snippet,
                 cwe: finding.cwe,
+                owasp: finding.owasp,
                 remediation: finding.remediation,
                 secureExample: finding.secureExample,
                 references: finding.references,
@@ -281,6 +284,7 @@ const explainRuleResult = (rule) => {
             severity: rule.severity,
             confidence: rule.confidence,
             cwe: rule.cwe,
+            owasp: rule.owasp,
             description: rule.description,
             insecureExample: rule.insecureExample,
             secureExample: rule.secureExample,
@@ -393,7 +397,7 @@ async function handleMessage(message, options = {}) {
                 serverInfo: {
                     name: exports.SERVER_NAME,
                     title: 'vibe-shield',
-                    version: options.version ?? '1.1.0',
+                    version: options.version ?? await (0, engine_1.packageVersion)(),
                 },
                 instructions: 'vibe-shield finds security bugs that AI coding agents ship: leaked secrets, unguarded API routes, missing Postgres RLS, SQL injection, prompt injection and poisoned agent skills. Call vibe_shield_scan after writing application code and before reporting a task as done, and vibe_shield_audit_skills after touching any agent instruction or MCP config file.',
             });
