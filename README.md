@@ -1,29 +1,33 @@
-<div align="center">
-
 # 🛡️ vibe-shield
 
-**The security gate for AI-written code.**
+**The security gate for AI-written code.** Find exposed secrets, unguarded routes and missing RLS before you ship.
 
-Your agent ships fast. It also ships `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`, a `DELETE` route with no session check, and a `CREATE TABLE` with no Row Level Security — because it was optimising for "it works".
-
-vibe-shield is a **static security scanner built for that failure mode**, plus an **Agent Skill** that makes Claude Code, Codex, Cursor and Windsurf audit before they say *"done"*.
+> ⭐ **If this tool helps your AI coding workflow, please give this repository a Star!** It helps more developers discover the project.
 
 [![npm version](https://img.shields.io/npm/v/@vibefoundry/vibe-shield.svg)](https://www.npmjs.com/package/@vibefoundry/vibe-shield)
 [![npm downloads](https://img.shields.io/npm/dm/@vibefoundry/vibe-shield.svg)](https://www.npmjs.com/package/@vibefoundry/vibe-shield)
 [![CI](https://img.shields.io/github/actions/workflow/status/avivgerz-hue/vibe-shield/ci.yml?branch=main&style=flat-square&logo=githubactions&label=CI)](https://github.com/avivgerz-hue/vibe-shield/actions/workflows/ci.yml)
-[![node](https://img.shields.io/badge/node-%E2%89%A518.17.0-5fa04e?style=flat-square&logo=nodedotjs)](#-requirements)
-[![license](https://img.shields.io/github/license/avivgerz-hue/vibe-shield?style=flat-square&color=blue)](./LICENSE)
+[![node](https://img.shields.io/badge/node-%E2%89%A518.17.0-5fa04e?style=flat-square)](#-requirements)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](./LICENSE)
 [![zero dependencies](https://img.shields.io/badge/runtime%20deps-0-brightgreen?style=flat-square)](./package.json)
 [![rules](https://img.shields.io/badge/detection%20signatures-92-8b5cf6?style=flat-square)](./src/scanner/rules)
 [![self-scan](https://img.shields.io/badge/self--scan-100%2F100%20A%2B-16a34a?style=flat-square)](#-it-scans-itself)
 
+![Live Terminal Demo](assets/demo.svg)
+
 ```bash
-npx -y @vibefoundry/vibe-shield scan
+npx -y @vibefoundry/vibe-shield@latest scan .
 ```
 
-![vibe-shield terminal preview](./assets/hero-terminal.svg)
+<sub>Illustrative two-file scan; fixes are applied manually. Results vary by project. A clean score is not a security guarantee.</sub>
 
-</div>
+### VibeFoundry Agent Suite
+
+- 🎨 **[unslop](https://github.com/avivgerz-hue/unslop)** — UI Design DNA &amp; Anti-Slop Engine · `npx -y unslop-mcp@latest init`
+- 🛡️ **[vibe-shield](https://github.com/avivgerz-hue/vibe-shield)** — Security Scanner for AI Code · `npx -y @vibefoundry/vibe-shield@latest scan .`
+- 👻 **[ghost-qa](https://github.com/avivgerz-hue/ghost-qa)** — Autonomous Headless Browser QA · `npx -y ghost-qa@latest test http://localhost:3000`
+
+vibe-shield is a **static security scanner** plus an **Agent Skill** that helps Claude Code, Codex, Cursor and Windsurf audit before they say *“done”*.
 
 ---
 
@@ -65,7 +69,7 @@ It works. It also has **three critical vulnerabilities** — no authentication, 
 `npx -y @vibefoundry/vibe-shield scan` catches all three in **17 milliseconds**:
 
 ```
-🛡️  vibe-shield · security scan (illustrative output)
+🛡️  vibe-shield · security scan (illustrative output for current source)
 target  /home/you/app
 
 💀 GRADE F — 0/100 · 3 critical
@@ -81,7 +85,7 @@ app/api/users/route.ts
            await db.query(`DELETE FROM users WHERE id = ${id} AND owner = ${userId}`);
   CRITICAL 4:22     VSB-AUTH-004  Record ownership taken from the request instead of the session (IDOR)
 
-  7 files  ·  1 KiB  ·  412 files/s  ·  17 ms  ·  79 rules
+  7 files  ·  1 KiB  ·  412 files/s  ·  17 ms  ·  80 rules
 
   ⚠  3 critical findings — rotate any exposed credential before anything else.
   Fix it      npx -y @vibefoundry/vibe-shield scan --fix-prompt    # writes SECURITY_PATCH_PROMPT.md for your agent
@@ -162,7 +166,7 @@ vibe-shield encodes those specific shapes: 92 signatures across eight defensive 
 
 **Client-boundary limitation:** Client reachability is a best-effort static graph of literal imports, re-exports and `require` calls using relative paths and root `tsconfig.json`/`jsconfig.json` aliases. Dynamic paths, inherited or nested configurations, excluded or oversized files and other bundler resolution may be missed. A server-side service-role helper still bypasses RLS: use `import 'server-only'`, authorize every privileged request, and verify the production bundle. Auth-helper names and `with*` wrappers are signals, not proof that authorization is enforced.
 
-**80 code signatures + 12 agent-integrity signatures = 92.** Every rule has an id, a CWE, an illustrative vulnerable shape, remediation guidance, and an OWASP association — run `npx -y @vibefoundry/vibe-shield rules` or `npx -y @vibefoundry/vibe-shield explain <ID>`.
+**80 code signatures + 12 agent-integrity signatures = 92.** The `scan` command runs the 80 code rules; `audit-skills` runs the 12 agent rules. Every rule has an id, a CWE, an illustrative vulnerable shape, remediation guidance, and an OWASP association — run `npx -y @vibefoundry/vibe-shield rules` or `npx -y @vibefoundry/vibe-shield explain <ID>`.
 
 ### Client-side secret & data exposure — `VSB-CLIENT-*`
 
@@ -423,12 +427,12 @@ This repository runs its own gate on every commit and in CI:
 
 ```console
 $ npx -y @vibefoundry/vibe-shield scan
-🛡️  vibe-shield · security scan (illustrative output)
+🛡️  vibe-shield · security scan (illustrative output for current source)
 target  /you/vibe-shield
 
 🏆 GRADE A+ — 100/100
 
-  21 files  ·  172 KiB  ·  236 files/s  ·  89 ms  ·  79 rules
+  21 files  ·  172 KiB  ·  236 files/s  ·  89 ms  ·  80 rules
 
   Nothing to fix. Keep the shield up. 🛡️
 
@@ -472,7 +476,7 @@ Suppressed findings are **counted and reported** in the scorecard, never silentl
 ```
  discover ──▶ project context ──▶ rule gate ──▶ detect ──▶ suppress ──▶ score ──▶ report
    │              │                  │           │
-   │              │                  │           └─ 92 rules, each a pure (FileContext) => RuleHit[]
+   │              │                  │           └─ 80 code rules; 12 agent-integrity rules run in audit-skills
    │              │                  └─ cheap content hints: most rules skip most files
    │              └─ manifests, framework flags, cross-file RLS index, git index, middleware matchers
    └─ one tree walk, gitignore/.vibe-shieldignore layering, binary + size + test/doc pruning

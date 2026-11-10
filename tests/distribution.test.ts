@@ -14,20 +14,24 @@ import { describe, expect, it } from 'vitest';
 
 import { buildScaffold, installScaffold, mergeMcpConfig, MCP_SERVER_ENTRY, MCP_SERVER_KEY } from '../src/init/scaffold';
 import { makeProject } from './helpers';
+import { ALL_RULES, SCAN_RULES } from '../src/scanner/rules';
+import { AGENT_RULES } from '../src/mcp-guard/skill-auditor';
 
 const ROOT = path.join(__dirname, '..');
 const read = (relativePath: string): string => readFileSync(path.join(ROOT, relativePath), 'utf8');
 const readJson = <T = Record<string, unknown>>(relativePath: string): T =>
   JSON.parse(read(relativePath)) as T;
 
-const manifest = readJson('package.json') as { name: string; version: string };
+const manifest = readJson('package.json') as { name: string; version: string; mcpName: string };
 
 describe('mcp registry manifests', () => {
   it('server.json follows the official registry schema', () => {
     const server = readJson<Record<string, unknown>>('server.json');
     // name must be namespace/server, which is how the registry verifies ownership.
     expect(String(server.name)).toMatch(/^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/);
-    expect(String(server.name)).toMatch(/^io\.github\./);
+    expect(server.name).toBe('io.github.avivgerz-hue/vibe-shield');
+    expect(manifest.mcpName).toBe(server.name);
+    expect(Object.keys(server).sort()).toEqual(['$schema', 'description', 'name', 'packages', 'repository', 'title', 'version', 'websiteUrl'].sort());
     expect(server.version).toBe(manifest.version);
     // The registry rejects descriptions over 100 characters.
     expect(String(server.description).length).toBeLessThanOrEqual(100);
@@ -43,11 +47,14 @@ describe('mcp registry manifests', () => {
     expect(packages).toHaveLength(1);
     const pkg = packages[0] ?? {};
     expect(pkg.registryType).toBe('npm');
+    expect(pkg.identifier).toBe(manifest.name);
     expect(pkg.identifier).toBe('@vibefoundry/vibe-shield');
     expect(pkg.identifier).not.toBe('vibe-shield');
     expect(pkg.version).toBe(manifest.version);
     const transport = pkg.transport as { type?: string };
-    expect(transport.type).toBe('stdio');
+    expect(transport).toEqual({ type: 'stdio' });
+    expect(pkg.packageArguments).toEqual([{ type: 'positional', value: 'mcp' }]);
+    expect(Object.keys(pkg).sort()).toEqual(['registryType', 'identifier', 'version', 'transport', 'packageArguments'].sort());
   });
 
   it('names the GitHub entry point wherever a command is advertised', () => {
@@ -76,6 +83,17 @@ describe('mcp registry manifests', () => {
     const tools = (glama.tools as Array<{ name: string }>).map((tool) => tool.name);
     expect(tools).toEqual(['vibe_shield_scan', 'vibe_shield_audit_skills', 'vibe_shield_explain_rule']);
     expect((glama.maintainers as string[]).length).toBeGreaterThan(0);
+  });
+});
+
+describe('README catalogue counts', () => {
+  it('distinguishes the code scanner and agent auditor from the full catalogue', () => {
+    const readme = read('README.md');
+    expect(ALL_RULES).toHaveLength(SCAN_RULES.length + AGENT_RULES.length);
+    expect(readme).toContain(`${SCAN_RULES.length} code signatures + ${AGENT_RULES.length} agent-integrity signatures = ${ALL_RULES.length}`);
+    expect(readme).toContain(`detection%20signatures-${ALL_RULES.length}-`);
+    expect(readme).toContain(`${SCAN_RULES.length} code rules; ${AGENT_RULES.length} agent-integrity rules`);
+    expect(readme).not.toMatch(/\b(?:79|85|91) rules\b/);
   });
 });
 
@@ -233,23 +251,41 @@ describe('README badges', () => {
   });
 });
 
-describe('hero terminal preview', () => {
-  it('embeds the hero image near the top of the README', () => {
+describe('README first impression', () => {
+  it('shows the star CTA, animated demo and immediately following quickstart near the top', () => {
     const readme = read('README.md');
-    expect(readme).toContain('![vibe-shield terminal preview](./assets/hero-terminal.svg)');
-    // Above the fold: within the first 40 lines, under the badges.
-    const line = readme.split('\n').findIndex((l) => l.includes('hero-terminal.svg'));
+    expect(readme).toContain('⭐ **If this tool helps your AI coding workflow, please give this repository a Star!**');
+    const marker = '![Live Terminal Demo](assets/demo.svg)';
+    const line = readme.split('\n').findIndex((l) => l.includes(marker));
     expect(line).toBeGreaterThan(0);
-    expect(line).toBeLessThan(40);
+    expect(line).toBeLessThan(25);
+    expect(readme).toContain(`${marker}\n\n\`\`\`bash\nnpx -y @vibefoundry/vibe-shield@latest scan .\n\`\`\``);
+    expect(readme).toContain('fixes are applied manually');
   });
 
-  it('ships the SVG the README points at', () => {
-    const svgPath = path.join(ROOT, 'assets', 'hero-terminal.svg');
-    expect(existsSync(svgPath), 'assets/hero-terminal.svg').toBe(true);
+  it('links all three suite repositories and their requested commands', () => {
+    const readme = read('README.md');
+    for (const repo of ['unslop', 'vibe-shield', 'ghost-qa']) expect(readme).toContain(`https://github.com/avivgerz-hue/${repo}`);
+    for (const command of ['npx -y unslop-mcp@latest init', 'npx -y @vibefoundry/vibe-shield@latest scan .', 'npx -y ghost-qa@latest test http://localhost:3000']) expect(readme).toContain(command);
+  });
+
+  it('ships a standalone accessible looping SVG with a reduced-motion fallback', () => {
+    const svgPath = path.join(ROOT, 'assets', 'demo.svg');
+    expect(existsSync(svgPath), 'assets/demo.svg').toBe(true);
     const svg = readFileSync(svgPath, 'utf8');
-    // A rasterised screenshot would not scale; this must stay a real vector.
     expect(svg.trimStart().startsWith('<svg')).toBe(true);
     expect(svg).toContain('viewBox');
+    expect(svg).toContain('@keyframes');
+    expect(svg).toContain('infinite');
+    expect(svg).toContain('prefers-reduced-motion');
+    expect(svg).toContain('<title');
+    expect(svg).toContain('<desc');
+    expect(svg).toContain('VSB-AUTH-001');
+    expect(svg).toContain('VSB-DB-001');
+    expect(svg).toContain('29/100');
+    expect(svg).toContain('100/100');
+    expect(svg).toContain('Manually add session ownership');
+    expect(svg).not.toMatch(/<script|<image|<foreignObject|(?:href|src)\s*=/i);
     expect(svg.length).toBeLessThan(200 * 1024);
   });
 });
