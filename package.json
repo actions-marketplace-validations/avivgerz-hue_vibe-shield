@@ -1,7 +1,7 @@
 {
   "name": "@vibefoundry/vibe-shield",
   "mcpName": "io.github.avivgerz-hue/vibe-shield",
-  "version": "2.1.3",
+  "version": "2.1.2",
   "description": "High-speed static security analyzer and MCP/agent-skill guard for AI-generated codebases. Catches the vulnerabilities autonomous coding agents ship: leaked secrets, unguarded mutation routes, missing Postgres RLS, unverified webhooks, prompt injection sinks and XSS.",
   "keywords": [
     "mcp",
@@ -46,7 +46,17 @@
     "ci-security-gate",
     "npx",
     "typescript",
-    "zero-dependencies"
+    "zero-dependencies",
+    "vibe-coding-security",
+    "ai-code-scanner",
+    "nextjs-security-scanner",
+    "supabase-rls-scanner",
+    "stripe-webhook-security",
+    "skill-md-scanner",
+    "prompt-injection-scanner",
+    "static-analysis-cli",
+    "claude-code-security",
+    "cursor-security"
   ],
   "license": "MIT",
   "author": "VibeFoundry",
